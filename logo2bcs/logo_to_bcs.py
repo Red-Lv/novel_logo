@@ -124,6 +124,7 @@ class Logo2BCS(object):
 
         print 'start fetching ori logo from the web'
 
+        ori_logo_dict = {}
         tot = len(authority_logo_info_list)
         cur = 0
         for rid, book_name, authority_logo in authority_logo_info_list:
@@ -139,6 +140,9 @@ class Logo2BCS(object):
                 continue
 
             ori_logo = ori_logo[0]
+
+            if ori_logo in ori_logo_dict:
+                continue
 
             #for debugging
             '''
@@ -162,6 +166,7 @@ class Logo2BCS(object):
                       ''.format(rid, book_name, ori_logo, r.status_code)
                 continue
 
+            ori_logo_dict[ori_logo] = 1
             bcs_object_name = self.fetch_object_name(ori_logo)
 
             with open(self.image_dir + '/' + bcs_object_name, 'wb') as fp:
