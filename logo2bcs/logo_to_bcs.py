@@ -109,6 +109,7 @@ class Logo2BCS(object):
             if not ori_logo:
                 continue
 
+            ori_logo = ori_logo[0]
             if ori_logo[:23] == 'http://bj.bs.baidu.com/':
                 continue
 
