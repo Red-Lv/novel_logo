@@ -144,12 +144,12 @@ class LogoCheck(object):
             if not substitution_logo:
                 substitution_logo = ''
 
+            if authority_logo == substitution_logo:
+                continue
+
             #For debugging
             print 'rid: {0}, book_name: {1}, ori_logo: {2}, substitution_logo: {3}' \
                   ''.format(rid, book_name, authority_logo, substitution_logo)
-
-            if authority_logo == substitution_logo:
-                continue
 
             #self.update_authority_logo(rid, substitution_logo)
 
@@ -174,7 +174,7 @@ class LogoCheck(object):
 
         query_sql = ''.format()
         delete_sql = ''.format()
-        update_sql = 'UPDATE novel_authority_info SET logo = %s WHERE rid = %d'.format()
+        update_sql = 'UPDATE novel_authority_info SET logo = %s WHERE rid = %s'.format()
 
         cursor = conn.cursor()
 
@@ -200,10 +200,6 @@ class LogoCheck(object):
 
         ori_logo = ori_logo[0]
 
-        print '------------'
-        print ori_logo
-        print '------------'
-
         if ori_logo in self.default_logo_dict:
             return False
 
@@ -220,7 +216,7 @@ class LogoCheck(object):
         url = logo.replace('/timg?', '/timg?er&')
 
         try:
-            r = requests.get(url, timeout=5)
+            r = requests.get(url, timeout=10)
             if r.status_code == requests.codes.ok:
                 is_valid = True
         except Exception as e:
@@ -271,7 +267,7 @@ class LogoCheck(object):
                 break
 
         print 'finish fetching substitution logo. rid: {0}, potential_logo_num: {1}, is_substituted:{2}' \
-              ''.format(rid, len(potential_logo_list), (substitution_logo is None))
+              ''.format(rid, len(potential_logo_list), (substitution_logo is not None))
 
         return substitution_logo
 
