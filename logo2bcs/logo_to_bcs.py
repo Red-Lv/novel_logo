@@ -228,9 +228,14 @@ class Logo2BCS(object):
 
             object = self.bucket.object('/' + bcs_object_name)
             ori_logo_substitution = object.get_url
-            try:
-                r = requests.get(ori_logo_substitution, timeout=5)
-            except Exception, e:
+            for retry_index in xrange(3):
+                try:
+                    r = requests.get(ori_logo_substitution, timeout=5)
+                except Exception as e:
+                    continue
+                else:
+                    break
+            else:
                 continue
 
             if r.status_code != requests.codes.ok:
