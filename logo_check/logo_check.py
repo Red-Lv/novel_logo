@@ -215,12 +215,15 @@ class LogoCheck(object):
 
         url = logo.replace('/timg?', '/timg?er&')
 
-        try:
-            r = requests.get(url, timeout=10)
-            if r.status_code == requests.codes.ok:
-                is_valid = True
-        except Exception as e:
-            print 'fail to fetch the logo. logo: {0}'.format(logo)
+        for retry_index in xrange(3):
+            try:
+                r = requests.get(url, timeout=5)
+                if r.status_code == requests.codes.ok:
+                    is_valid = True
+            except Exception as e:
+                print 'fail to fetch the logo. logo: {0}'.format(logo)
+            else:
+                break
 
         print 'finish verifying the validity of the logo. logo: {0}, is_valid: {1}'.format(logo, is_valid)
 
