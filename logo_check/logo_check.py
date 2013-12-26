@@ -6,6 +6,7 @@ __author__ = 'lvleibing01'
 import MySQLdb
 import requests
 
+import hashlib
 import urlparse
 import ConfigParser
 
@@ -23,7 +24,7 @@ class LogoCheck(object):
         self.module_num = config.getint('logo_check', 'module_num')
         self.module_index = config.getint('logo_check', 'module_index')
 
-        self.default_logo_file = config.getint('logo_check', 'default_logo_file')
+        self.default_logo_file = config.get('logo_check', 'default_logo_file')
 
         self.default_logo_dict = {}
         try:
@@ -35,10 +36,10 @@ class LogoCheck(object):
                         continue
 
                     line = line.split('\t')
-                    if len(line) < 2:
+                    if len(line) < 3:
                         continue
 
-                    site_id, default_logo = line[: 2]
+                    site_id, site, default_logo = line[: 3]
                     self.default_logo_dict[default_logo] = int(site_id)
         except Exception as e:
             print 'fail to read default logo file. err: {0}'.format(e)
@@ -79,14 +80,14 @@ class LogoCheck(object):
             print 'fail to connect to the db cluster. err: {0}'.format(e)
             return authority_logo_list
 
-        query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid % {0} = {1}' \
-                    ''.format(self.module_num, self.module_index)
+        query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid %% %s = %s' \
+                    ''.format()
         delete_sql = ''.format()
         update_sql = ''.format()
 
         cursor = conn.cursor()
 
-        cursor.execute(query_sql)
+        cursor.execute(query_sql, (self.module_num, self.module_index))
         rows = cursor.fetchall()
 
         cursor.close()
@@ -144,7 +145,7 @@ class LogoCheck(object):
             if authority_logo == substitution_logo:
                 continue
 
-            self.update_authority_logo(rid, substitution_logo)
+            #self.update_authority_logo(rid, substitution_logo)
 
         print 'finish checking logo validity.'
 
@@ -193,6 +194,10 @@ class LogoCheck(object):
 
         ori_logo = ori_logo[0]
 
+        print '------------'
+        print ori_logo
+        print '------------'
+
         if ori_logo in self.default_logo_dict:
             return False
 
@@ -210,7 +215,7 @@ class LogoCheck(object):
 
         try:
             r = requests.get(url, timeout=5)
-            if r.status_code == r.codes.ok:
+            if r.status_code == requests.codes.ok:
                 is_valid = True
         except Exception as e:
             print 'fail to fetch the logo. logo: {0}'.format(logo)
@@ -236,9 +241,9 @@ class LogoCheck(object):
             print 'fail to connect to the db cluster. err: {0}'.format(e)
             return substitution_logo
 
-        table_id = get_novel_cluster_table_id(book_name.decode('GBK', 'ignore'))
+        table_id = self.get_novel_cluster_table_id(book_name.decode('GBK', 'ignore'))
 
-        query_sql = 'SELECT site_id, dir_id, dir_url FROM novel_cluster_info%d WHERE cluster_id = %d' \
+        query_sql = 'SELECT site_id, dir_id, dir_url FROM novel_cluster_info%s WHERE cluster_id = %s' \
                     ''.format()
         delete_sql = ''.format()
         update_sql = ''.format()
@@ -281,7 +286,7 @@ class LogoCheck(object):
             print 'fail to connect to the db format. err: {0}'.format(e)
             return potential_logo_list
 
-        query_sql = 'SELECT site_status, logo FROM dir_fmt_info%d WHERE dir_id = %d'
+        query_sql = 'SELECT site_status, logo FROM dir_fmt_info%s WHERE dir_id = %s'
         delete_sql = ''.format()
         update_sql = ''.format()
 
@@ -327,10 +332,21 @@ class LogoCheck(object):
 
         return potential_logo_list
 
+    def get_novel_cluster_table_id(self, book_name):
+        """
+        """
+
+        CLUSTER_TABLES_NUM = 256
+        m = hashlib.md5()
+        m.update(book_name.encode("GBK", "ignore"))
+        table_id = int(m.hexdigest(), 16) % CLUSTER_TABLES_NUM
+
+        return table_id
+
 if __name__ == '__main__':
 
     logo_check = LogoCheck()
-    logo_check.init('./data/config.txt')
+    logo_check.init('./conf/config.txt')
 
     logo_check.run()
 
