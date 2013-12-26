@@ -147,9 +147,14 @@ class Logo2BCS(object):
             '''
 
             headers = {'referer': query.get('ref', [''])[0]}
-            try:
-                r = requests.get(ori_logo, headers=headers, timeout=5)
-            except Exception as e:
+            for retry_index in xrange(3):
+                try:
+                    r = requests.get(ori_logo, headers=headers, timeout=5)
+                except Exception as e:
+                    continue
+                else:
+                    break
+            else:
                 continue
 
             if r.status_code != requests.codes.ok:
