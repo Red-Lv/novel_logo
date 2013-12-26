@@ -24,12 +24,12 @@ class Logo2BCS(object):
 
     def init(self, config_file):
 
-        config_parser = ConfigParser.ConfigParser()
-        config = config_parser(config_file)
-
+        config = ConfigParser.ConfigParser()
+        config.read(config_file)
+        
         self.module_num = config.getint('logo2bcs', 'module_num')
         self.module_index = config.getint('logo2bcs', 'module_index')
-        self.module_index = config.get('logo2bcs', 'image_dir')
+        self.image_dir = config.get('logo2bcs', 'image_dir')
 
         self.timg_noexpired_key = config.get('timg', 'timg_noexpired_key')
 
@@ -40,6 +40,7 @@ class Logo2BCS(object):
         self.bcs_bucket = config.get('bcs', 'bucket')
 
         self.bcs = pybcs.BCS(self.bcs_host, self.bcs_ak, self.bcs_sk, pybcs.HttplibHTTPC)
+        self.bucket = self.bcs.bucket(self.bcs_bucket)
 
         return True
 
@@ -85,11 +86,14 @@ class Logo2BCS(object):
 
         query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid % {0} = {1}' \
                     ''.format(self.module_num, self.module_index)
+        query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid = 1695774947'.format(self.module_num, self.module_index)
+        delete_sql = ''.format()
         delete_sql = ''.format()
         update_sql = ''.format()
 
         cursor = conn.cursor()
 
+        print query_sql
         cursor.execute(query_sql)
         rows = cursor.fetchall()
 
@@ -127,8 +131,15 @@ class Logo2BCS(object):
 
             ori_logo = ori_logo[0]
 
+            print authority_logo
+            print ori_logo
+
+            print query.get('ref', [''])[0]
             headers = {'referer': query.get('ref', [''])[0]}
-            r = requests.get(ori_logo, headers=headers)
+            try:
+                r = requests.get(ori_logo, headers=headers, timeout=10)
+            except Exception as e:
+                continue
 
             if r.status_code != requests.codes.ok:
                 print 'fail to fetch ori logo. rid: {0}, book_name: {1}. ori_logo: {2}. status_code: {3}' \
@@ -137,9 +148,9 @@ class Logo2BCS(object):
 
             bcs_object_name = self.fetch_object_name(ori_logo)
 
-            with open(self.image_dir + '/' + bcs_object_name, 'w') as fp:
+            with open(self.image_dir + '/' + bcs_object_name, 'wb') as fp:
 
-                fp.write(r.text)
+                fp.write(r.content)
                 fp.close()
 
             print 'success in fetching ori logo. rid: {0}, book_name: {1}, ori_logo: {2}, bcs_object_name: {3}' \
@@ -153,9 +164,12 @@ class Logo2BCS(object):
 
         print 'start uploading ori logo to bcs'
 
-        sub_process = subprocess.Popen('bcsh.py upload -r {0} {1}'.format(self.image_dir, self.bcs_logo_bucket),
-                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print 'python /home/work/tools/Baidu-BCS-SDK-Python-1.3.2/tools/bcsh.py upload -r {0} {1}'.format(self.image_dir, self.bcs_host + '/' + self.bcs_bucket)
+        sub_process = subprocess.Popen('python /home/work/tools/Baidu-BCS-SDK-Python-1.3.2/tools/bcsh.py upload -r {0} {1}'.format(self.image_dir, self.bcs_host + '/' + self.bcs_bucket + '/'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         sub_process.wait()
+
+        print '----------------'
+        print sub_process.returncode
 
         if sub_process.returncode != 0:
             print 'fail to upload ori logo to bcs. err: {0}'.format(sub_process.stderr.read())
@@ -186,7 +200,7 @@ class Logo2BCS(object):
 
         tot = len(authority_logo_list)
         cur = 0
-        for rid, book_name, authority_logo in authority_logo:
+        for rid, book_name, authority_logo in authority_logo_list:
 
             cur += 1
             print 'start substituting authority logo. cur: {0}, tot: {1}'.format(cur, tot)
@@ -201,9 +215,14 @@ class Logo2BCS(object):
             ori_logo = ori_logo[0]
             bcs_object_name = self.fetch_object_name(ori_logo)
 
-            object = self.bcs_buckte(bcs_object_name)
+            object = self.bucket.object('/' + bcs_object_name)
             ori_logo_substitution = object.get_url
-            r = requests.get(ori_logo_substitution)
+            #proxy = {'http': '33.33.33.10:8118'}
+            try:
+                #r = requests.get(ori_logo_substitution, proxies=proxy)
+                r = requests.get(ori_logo_substitution)
+            except Exception, e:
+                continue
 
             if r.status_code != requests.codes.ok:
                 print 'fail to substitute authority logo. rid: {0}, ori: {1}, substitution: {2}, err: not exists in bcs' \
@@ -211,15 +230,18 @@ class Logo2BCS(object):
                 continue
 
             query_string = self.construct_query(query, ori_logo_substitution)
-            url_parse.query = query_string
-            authority_logo_substitution = urlparse.urlunparse(url_parse)
+            #url_parse.query = query_string
+            authority_logo_substitution = urlparse.urlunparse((url_parse.scheme, url_parse.netloc, url_parse.path, url_parse.params, 'pa&'+query_string, url_parse.fragment))
 
+            print authority_logo_substitution
             authority_logo_substitution = authority_logo_substitution.replace('&', '&amp;')
 
             cursor.execute(update_sql, (authority_logo_substitution, rid))
 
             print 'success substituting authority logo. rid: {0}, ori: {1}, substitution: {2}' \
                   ''.format(rid, ori_logo, object.get_url)
+            
+            sys.exit(0)
 
         cursor.close()
         conn.close()
@@ -234,6 +256,7 @@ class Logo2BCS(object):
             del query['ref']
 
         del query['src']
+        del query['pa']
 
         timestamp = str(int(time.time()))
 
@@ -246,14 +269,14 @@ class Logo2BCS(object):
         query['sec'] = [timestamp]
         query['di'] = [di]
 
-        query_string = urllib.urlencode(query) + '&' + urllib.urlencode({'src': src_substitution})
+        query_string = urllib.urlencode(query, doseq=True) + '&' + urllib.urlencode({'src': src_substitution})
         return query_string
 
     def fetch_object_name(self, url):
         """
         """
 
-        rindex = file.rfind('.')
+        rindex = url.rfind('.')
 
         prefix = ''
         suffix = url
@@ -271,6 +294,8 @@ class Logo2BCS(object):
 if __name__ == '__main__':
 
     logo_to_bcs = Logo2BCS()
-    logo_to_bcs.init('../conf/config.txt')
+    logo_to_bcs.init('./conf/config.txt')
 
     logo_to_bcs.run()
+
+    logo_to_bcs.exit()
