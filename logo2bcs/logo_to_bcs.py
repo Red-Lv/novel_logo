@@ -30,6 +30,18 @@ class Logo2BCS(object):
         self.module_num = config.getint('logo2bcs', 'module_num')
         self.module_index = config.getint('logo2bcs', 'module_index')
         self.image_dir = config.get('logo2bcs', 'image_dir')
+        self.rid_file = config.get('logo2bcs', 'rid_file')
+
+        self.rid_list = []
+        with open(self.rid_file) as fp:
+            for line in fp:
+
+                line = line.strip()
+                if not line:
+                    continue
+
+                rid = line
+                self.rid_list.append(rid)
 
         self.timg_noexpired_key = config.get('timg', 'timg_noexpired_key')
 
@@ -86,20 +98,32 @@ class Logo2BCS(object):
 
         query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid % {0} = {1}' \
                     ''.format(self.module_num, self.module_index)
+        query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid = %s'
+        #query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid = 1695774947'.format(self.module_num, self.module_index)
         #query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid = 1695774947'.format(self.module_num, self.module_index)
         delete_sql = ''.format()
         update_sql = ''.format()
 
         cursor = conn.cursor()
 
+        '''
         cursor.execute(query_sql)
         rows = cursor.fetchall()
 
         cursor.close()
         conn.close()
+        '''
 
-        for rid, book_name, logo in rows:
+        #for rid, book_name, logo in rows:
+        for rid in self.rid_list:
 
+            cursor.execute(query_sql, (rid,))
+            row = cursor.fetchone()
+
+            if not row:
+                continue
+
+            (rid, book_name, logo) = row
             logo = logo.replace('&amp;', '&')
 
             url_parse = urlparse.urlparse(logo)
@@ -114,6 +138,9 @@ class Logo2BCS(object):
                 continue
 
             authority_logo_list.append((rid, book_name, logo))
+
+        cursor.close()
+        conn.close()
 
         print 'finish fetching authority logo info list. len: {0}'.format(len(authority_logo_list))
 
@@ -159,20 +186,27 @@ class Logo2BCS(object):
                 else:
                     break
             else:
+                print 'fail to fetch ori logo. rid: {0}, book_name: {1}, ori_logo: {2}, max_tries: {3}' \
+                      ''.format(rid, book_name, ori_logo, 3)
                 continue
 
             if r.status_code != requests.codes.ok:
-                print 'fail to fetch ori logo. rid: {0}, book_name: {1}. ori_logo: {2}. status_code: {3}' \
+                print 'fail to fetch ori logo. rid: {0}, book_name: {1}, ori_logo: {2}, status_code: {3}' \
                       ''.format(rid, book_name, ori_logo, r.status_code)
                 continue
 
             ori_logo_dict[ori_logo] = 1
             bcs_object_name = self.fetch_object_name(ori_logo)
 
-            with open(self.image_dir + '/' + bcs_object_name, 'wb') as fp:
+            try:
+                with open(self.image_dir + '/' + bcs_object_name, 'wb') as fp:
 
-                fp.write(r.content)
-                fp.close()
+                    fp.write(r.content)
+                    fp.close()
+
+            except Exception as e:
+                print 'fail to open image file. err: {0}'.format(e)
+                continue
 
             print 'success in fetching ori logo. rid: {0}, book_name: {1}, ori_logo: {2}, bcs_object_name: {3}' \
                   ''.format(rid, book_name, ori_logo, bcs_object_name)
