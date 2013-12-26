@@ -1,0 +1,18 @@
+[logo2bcs]
+
+module_index: 0
+module_num: 10
+
+image_dir: ./data/image_dir
+
+[timg]
+
+no_expired_key: wisetimgkey_noexpire_3f60e7362b8c23871c7564327a31d9d7
+
+[bcs]
+
+host: http://bj.bs.baidu.com/
+
+ak: ukiZg0s7VRDjqbuWyVZfM4dXK1rXmASXl2w
+sk: 2eENvIwbkhyY3O5FHYcROKp2L
+bucket: wise-novel-test
