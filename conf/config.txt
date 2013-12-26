@@ -15,7 +15,8 @@ host: http://bj.bs.baidu.com/
 
 ak: ukiZg0s7VRDjqbuWyVZfM4dXK1rXmASXl2w
 sk: 2eENvIwbkhyY3O5FHYcROKp2L
-bucket: wise-novel-test
+#bucket: wise-novel-test
+bucket: wise-novel-authority-logo
 
 [logo_check]
 
