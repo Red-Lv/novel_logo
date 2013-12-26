@@ -141,7 +141,6 @@ class Logo2BCS(object):
                 continue
 
             ori_logo = ori_logo[0]
-
             if ori_logo in ori_logo_dict:
                 continue
 
