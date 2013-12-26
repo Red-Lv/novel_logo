@@ -240,8 +240,7 @@ class Logo2BCS(object):
 
             query_string = self.construct_query(query, ori_logo_substitution)
             authority_logo_substitution = urlparse.urlunparse((url_parse.scheme, url_parse.netloc, url_parse.path,
-                                                               url_parse.params, 'pa&' + query_string,
-                                                               url_parse.fragment))
+                                                               url_parse.params, query_string, url_parse.fragment))
 
             #print authority_logo_substitution
             authority_logo_substitution = authority_logo_substitution.replace('&', '&amp;')
