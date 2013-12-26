@@ -41,6 +41,7 @@ class LogoCheck(object):
 
                     site_id, site, default_logo = line[: 3]
                     self.default_logo_dict[default_logo] = int(site_id)
+                    self.default_logo_dict[self.fetch_object_name(default_logo)] = int(site_id)
         except Exception as e:
             print 'fail to read default logo file. err: {0}'.format(e)
 
@@ -107,7 +108,12 @@ class LogoCheck(object):
             ori_logo = ori_logo[0]
 
             if ori_logo[:23] == 'http://bj.bs.baidu.com/':
-                continue
+
+                url_parse = urlparse.urlparse(ori_logo)
+                path = url_parse.path
+                ori_logo_object_name = path.split('/')[-1]
+                if ori_logo_object_name not in self.default_logo_dict:
+                    continue
 
             authority_logo_list.append((rid, book_name, logo))
 
@@ -342,6 +348,25 @@ class LogoCheck(object):
         table_id = int(m.hexdigest(), 16) % CLUSTER_TABLES_NUM
 
         return table_id
+
+    def fetch_object_name(self, url):
+        """
+        """
+
+        rindex = url.rfind('.')
+
+        prefix = url
+        suffix = ''
+
+        if rindex != -1:
+            prefix = url[: rindex]
+            suffix = url[rindex + 1:]
+
+        m = hashlib.md5()
+        m.update(prefix)
+        name = m.hexdigest()
+
+        return '{0}.{1}'.format(name, suffix)
 
 if __name__ == '__main__':
 
