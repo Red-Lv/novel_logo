@@ -151,7 +151,7 @@ class LogoCheck(object):
             print 'rid: {0}, book_name: {1}, ori_logo: {2}, substitution_logo: {3}' \
                   ''.format(rid, book_name, authority_logo, substitution_logo)
 
-            #self.update_authority_logo(rid, substitution_logo)
+            self.update_authority_logo(rid, substitution_logo)
 
         print 'finish checking logo validity.'
 
@@ -178,6 +178,7 @@ class LogoCheck(object):
 
         cursor = conn.cursor()
 
+        authority_logo = authority_logo.replace('&', '&amp;')
         cursor.execute(update_sql, (authority_logo, rid))
 
         cursor.close()
