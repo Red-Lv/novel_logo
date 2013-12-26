@@ -4,6 +4,7 @@ module_index: 0
 module_num: 100000
 
 image_dir: ./data/image_dir
+rid_file: ./data/rid.txt
 
 [timg]
 
