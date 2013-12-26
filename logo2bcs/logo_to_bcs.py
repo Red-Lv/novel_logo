@@ -50,7 +50,7 @@ class Logo2BCS(object):
 
     def exit(self):
 
-        sub_process = subprocess.Popen('cd {0} && rm -rf *'.format(self.image_dir))
+        sub_process = subprocess.Popen('cd {0} && rm -rf *'.format(self.image_dir), shell=True)
         sub_process.wait()
 
         return True
@@ -86,14 +86,12 @@ class Logo2BCS(object):
 
         query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid % {0} = {1}' \
                     ''.format(self.module_num, self.module_index)
-        query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid = 1695774947'.format(self.module_num, self.module_index)
-        delete_sql = ''.format()
+        #query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid = 1695774947'.format(self.module_num, self.module_index)
         delete_sql = ''.format()
         update_sql = ''.format()
 
         cursor = conn.cursor()
 
-        print query_sql
         cursor.execute(query_sql)
         rows = cursor.fetchall()
 
@@ -103,6 +101,17 @@ class Logo2BCS(object):
         for rid, book_name, logo in rows:
 
             logo = logo.replace('&amp;', '&')
+
+            url_parse = urlparse.urlparse(logo)
+            query = urlparse.parse_qs(url_parse.query, keep_blank_values=True)
+            ori_logo = query.get('src')
+
+            if not ori_logo:
+                continue
+
+            if ori_logo[:23] == 'http://bj.bs.baidu.com/':
+                continue
+
             authority_logo_list.append((rid, book_name, logo))
 
         print 'finish fetching authority logo info list. len: {0}'.format(len(authority_logo_list))
@@ -131,13 +140,15 @@ class Logo2BCS(object):
 
             ori_logo = ori_logo[0]
 
+            #for debugging
+            '''
             print authority_logo
             print ori_logo
+            '''
 
-            print query.get('ref', [''])[0]
             headers = {'referer': query.get('ref', [''])[0]}
             try:
-                r = requests.get(ori_logo, headers=headers, timeout=10)
+                r = requests.get(ori_logo, headers=headers, timeout=5)
             except Exception as e:
                 continue
 
@@ -164,12 +175,12 @@ class Logo2BCS(object):
 
         print 'start uploading ori logo to bcs'
 
-        print 'python /home/work/tools/Baidu-BCS-SDK-Python-1.3.2/tools/bcsh.py upload -r {0} {1}'.format(self.image_dir, self.bcs_host + '/' + self.bcs_bucket)
-        sub_process = subprocess.Popen('python /home/work/tools/Baidu-BCS-SDK-Python-1.3.2/tools/bcsh.py upload -r {0} {1}'.format(self.image_dir, self.bcs_host + '/' + self.bcs_bucket + '/'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        #print 'python /home/work/tools/Baidu-BCS-SDK-Python-1.3.2/tools/bcsh.py upload -r {0} {1}'.format(self.image_dir, self.bcs_host + '/' + self.bcs_bucket)
+        sub_process = subprocess.Popen('python /home/work/tools/Baidu-BCS-SDK-Python-1.3.2/tools/bcsh.py '
+                                       'upload -r {0} {1}'
+                                       ''.format(self.image_dir, self.bcs_host + '/' + self.bcs_bucket + '/'),
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         sub_process.wait()
-
-        print '----------------'
-        print sub_process.returncode
 
         if sub_process.returncode != 0:
             print 'fail to upload ori logo to bcs. err: {0}'.format(sub_process.stderr.read())
@@ -189,7 +200,7 @@ class Logo2BCS(object):
             conn.set_character_set('GBK')
             conn.autocommit(True)
         except Exception as e:
-            print 'fail to connect to the db cluster. error: {0}'.format(e)
+            print 'fail to connect to the db cluster. err: {0}'.format(e)
             return False
 
         query_sql = ''.format()
@@ -217,10 +228,8 @@ class Logo2BCS(object):
 
             object = self.bucket.object('/' + bcs_object_name)
             ori_logo_substitution = object.get_url
-            #proxy = {'http': '33.33.33.10:8118'}
             try:
-                #r = requests.get(ori_logo_substitution, proxies=proxy)
-                r = requests.get(ori_logo_substitution)
+                r = requests.get(ori_logo_substitution, timeout=5)
             except Exception, e:
                 continue
 
@@ -230,19 +239,18 @@ class Logo2BCS(object):
                 continue
 
             query_string = self.construct_query(query, ori_logo_substitution)
-            #url_parse.query = query_string
-            authority_logo_substitution = urlparse.urlunparse((url_parse.scheme, url_parse.netloc, url_parse.path, url_parse.params, 'pa&'+query_string, url_parse.fragment))
+            authority_logo_substitution = urlparse.urlunparse((url_parse.scheme, url_parse.netloc, url_parse.path,
+                                                               url_parse.params, 'pa&' + query_string,
+                                                               url_parse.fragment))
 
-            print authority_logo_substitution
+            #print authority_logo_substitution
             authority_logo_substitution = authority_logo_substitution.replace('&', '&amp;')
 
             cursor.execute(update_sql, (authority_logo_substitution, rid))
 
             print 'success substituting authority logo. rid: {0}, ori: {1}, substitution: {2}' \
-                  ''.format(rid, ori_logo, object.get_url)
+                  ''.format(rid, authority_logo, authority_logo_substitution)
             
-            sys.exit(0)
-
         cursor.close()
         conn.close()
 
@@ -269,7 +277,8 @@ class Logo2BCS(object):
         query['sec'] = [timestamp]
         query['di'] = [di]
 
-        query_string = urllib.urlencode(query, doseq=True) + '&' + urllib.urlencode({'src': src_substitution})
+        query_string = 'pa' + '&' + urllib.urlencode(query, doseq=True) + '&' + \
+                       urllib.urlencode({'src': src_substitution})
         return query_string
 
     def fetch_object_name(self, url):
@@ -278,8 +287,8 @@ class Logo2BCS(object):
 
         rindex = url.rfind('.')
 
-        prefix = ''
-        suffix = url
+        prefix = url
+        suffix = ''
 
         if rindex != -1:
             prefix = url[: rindex]
