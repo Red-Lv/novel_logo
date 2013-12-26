@@ -1,13 +1,13 @@
 [logo2bcs]
 
 module_index: 0
-module_num: 10
+module_num: 100000
 
 image_dir: ./data/image_dir
 
 [timg]
 
-no_expired_key: wisetimgkey_noexpire_3f60e7362b8c23871c7564327a31d9d7
+timg_noexpired_key: wisetimgkey_noexpire_3f60e7362b8c23871c7564327a31d9d7
 
 [bcs]
 
