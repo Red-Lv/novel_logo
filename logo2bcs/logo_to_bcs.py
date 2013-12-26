@@ -43,6 +43,17 @@ class Logo2BCS(object):
 
         return True
 
+    def __del__(self):
+
+        pass
+
+    def exit(self):
+
+        sub_process = subprocess.Popen('cd {0} && rm -rf *'.format(self.image_dir))
+        sub_process.wait()
+
+        return True
+
     def run(self):
 
         authority_logo_info_list = self.fetch_authority_logo_info_list()
