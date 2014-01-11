@@ -28,10 +28,10 @@ class LogoCheck(object):
 
         self.module_num = config.getint('logo_check', 'module_num')
         self.module_index = config.getint('logo_check', 'module_index')
-        self.default_logo_file = config.get('logo_check', 'default_logo_file')
 
         self.default_logo_dict = {}
-        self.set_default_logo(self.default_logo_file)
+        default_logo_file = config.get('logo_check', 'default_logo_file')
+        self.set_default_logo(default_logo_file)
 
         return True
 
@@ -40,7 +40,7 @@ class LogoCheck(object):
         """
 
         try:
-            with open(self.default_logo_file) as fp:
+            with open(default_logo_file) as fp:
                 for line in fp:
 
                     line = line.strip()
