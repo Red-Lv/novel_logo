@@ -6,9 +6,11 @@ __author__ = 'lvleibing01'
 import MySQLdb
 import requests
 
-import hashlib
 import urlparse
 import ConfigParser
+
+from lib.bcs import *
+from lib.util import *
 
 
 class LogoCheck(object):
@@ -21,12 +23,22 @@ class LogoCheck(object):
         config = ConfigParser.ConfigParser()
         config.read(config_file)
 
+        self.bcs = BCSExtended()
+        self.bcs.init(config)
+
         self.module_num = config.getint('logo_check', 'module_num')
         self.module_index = config.getint('logo_check', 'module_index')
-
         self.default_logo_file = config.get('logo_check', 'default_logo_file')
 
         self.default_logo_dict = {}
+        self.set_default_logo(self.default_logo_file)
+
+        return True
+
+    def set_default_logo(self, default_logo_file):
+        """
+        """
+
         try:
             with open(self.default_logo_file) as fp:
                 for line in fp:
@@ -40,8 +52,11 @@ class LogoCheck(object):
                         continue
 
                     site_id, site, default_logo = line[: 3]
-                    self.default_logo_dict[default_logo] = int(site_id)
-                    self.default_logo_dict[self.fetch_object_name(default_logo)] = int(site_id)
+                    site_id = int(site_id)
+
+                    self.default_logo_dict[default_logo] = site_id
+                    self.default_logo_dict[fetch_object_key(default_logo)] = site_id
+
         except Exception as e:
             print 'fail to read default logo file. err: {0}'.format(e)
 
@@ -81,6 +96,7 @@ class LogoCheck(object):
             print 'fail to connect to the db cluster. err: {0}'.format(e)
             return authority_logo_list
 
+        #the idea splitting in the rid list in the db is not a good idea.
         query_sql = 'SELECT rid, book_name, logo FROM novel_authority_info WHERE rid %% %s = %s' \
                     ''.format()
         delete_sql = ''.format()
@@ -106,13 +122,12 @@ class LogoCheck(object):
                 continue
 
             ori_logo = ori_logo[0]
-
-            if ori_logo[:23] == 'http://bj.bs.baidu.com/':
+            if ori_logo[:23] == self.bcs.bcs_host:
 
                 url_parse = urlparse.urlparse(ori_logo)
                 path = url_parse.path
-                ori_logo_object_name = path.split('/')[-1]
-                if ori_logo_object_name not in self.default_logo_dict:
+                ori_logo_object_key = path.split('/')[-1]
+                if ori_logo_object_key not in self.default_logo_dict:
                     continue
 
             authority_logo_list.append((rid, book_name, logo))
@@ -200,7 +215,6 @@ class LogoCheck(object):
             return False
 
         ori_logo = ori_logo[0]
-
         if ori_logo in self.default_logo_dict:
             return False
 
@@ -338,35 +352,6 @@ class LogoCheck(object):
 
         return potential_logo_list
 
-    def get_novel_cluster_table_id(self, book_name):
-        """
-        """
-
-        CLUSTER_TABLES_NUM = 256
-        m = hashlib.md5()
-        m.update(book_name.encode("GBK", "ignore"))
-        table_id = int(m.hexdigest(), 16) % CLUSTER_TABLES_NUM
-
-        return table_id
-
-    def fetch_object_name(self, url):
-        """
-        """
-
-        rindex = url.rfind('.')
-
-        prefix = url
-        suffix = ''
-
-        if rindex != -1:
-            prefix = url[: rindex]
-            suffix = url[rindex + 1:]
-
-        m = hashlib.md5()
-        m.update(prefix)
-        name = m.hexdigest()
-
-        return '{0}.{1}'.format(name, suffix)
 
 if __name__ == '__main__':
 
