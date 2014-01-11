@@ -25,10 +25,9 @@ def fetch_object_key(url):
     m = hashlib.md5()
 
     rindex = url.rfind('.')
-    prefix = url[: rindex]
     suffix = url[rindex: ][1: ]
 
-    m.update(prefix)
+    m.update(url)
     object_prefix = m.hexdigest()
     object_suffix = suffix
 
