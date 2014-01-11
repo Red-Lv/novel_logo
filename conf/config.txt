@@ -25,3 +25,4 @@ module_index: 0
 module_num: 100000
 
 default_logo_file: ./data/default_logo.txt
+forbidden_logo_file: ./data/forbidden_logo.txt
