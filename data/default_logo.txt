@@ -4,7 +4,6 @@
 3	zhulang.com	http://images.zhulang.com/www/image/no_book.gif
 4	fbook.net	http://img.fbook.net/man/images/bookintro/fm.jpg
 5	xstxw.com	http://www.xstxw.com/images/orange/images/coverpage_05.gif
-6	xs8.cn	http://pic.hongxiu.com/www/images/NOVELADMINIMAGES/
 7	sina.com.cn	http://www.sinaimg.cn/book/vipbook/nonecover-119.gif
 8	readnovel.com	http://img4.readnovel.com/web/sortrand/sort1_1.gif
 9	qdmm.com	http://image.cmfu.com/books/0.jpg
@@ -42,7 +41,6 @@
 61	hljcre.com	http://www.hljcre.com/images/noimg.gif
 62	zzzcn.com	http://www.zzzcn.com/modules/article/images/nocover.jpg
 63	nv001.cn	http://www.nv001.cn/files/article/image/9/9207/9207s.jpg
-64	6ycn.com	http://www.6ycn.com/nopic.php
 65	book.qq.com	http://chuangshi.qq.com/Public/mainsite/Uploads/default-cover-large.png
 66	sfacg.com	http://book.sfacg.com/NovelCover/Big/default.jpg
 68	llwx.net	http://www.llwx.net/modules/article/images/nocover.jpg
@@ -103,7 +101,6 @@
 164	www.tadu.com	http://media.tadu.com/web_static/images/v1.5/categories/cover_250-200.jpg
 166	www.huanxia.com	http://pic.hxcdn.net/www/cover2.jpg
 167	www.yuanchuang.com	http://static.yuanchuang.com/images/nocover.jpg
-168	www.motie.com	http://img.motieimg.com/_assets/fish.gif?33
 169	www.qefeng.com	http://staic.qefeng.com:8080/cover/default.jpg
 171	siluke.com	http://www.siluke.com/modules/article/images/nocover.jpg
 172	quanben.com	http://www.quanben.com/modules/article/images/nocover.jpg
