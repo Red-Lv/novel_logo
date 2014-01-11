@@ -1,2 +1,3 @@
 6	xs8.cn	http://pic.hongxiu.com/www/images/NOVELADMINIMAGES/
+64	6ycn.com	http://www.6ycn.com/nopic.php
 168	www.motie.com	http://img.motieimg.com/_assets/fish.gif?33
