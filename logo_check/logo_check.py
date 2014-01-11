@@ -33,6 +33,10 @@ class LogoCheck(object):
         default_logo_file = config.get('logo_check', 'default_logo_file')
         self.set_default_logo(default_logo_file)
 
+        self.forbidden_logo_dict = {}
+        forbidden_logo_file = config.get('logo_check', 'forbidden_logo_file')
+        self.set_forbidden_logo(forbidden_logo_file)
+
         return True
 
     def set_default_logo(self, default_logo_file):
@@ -59,6 +63,33 @@ class LogoCheck(object):
 
         except Exception as e:
             print 'fail to read default logo file. err: {0}'.format(e)
+
+        return True
+
+    def set_forbidden_logo(self, forbidden_logo_file):
+        """
+        """
+
+        try:
+            with open(forbidden_logo_file) as fp:
+                for line in fp:
+
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    line = line.split('\t')
+                    if len(line) < 3:
+                        continue
+
+                    site_id, site, forbidden_logo = line[: 3]
+                    site_id = int(site_id)
+
+                    self.forbidden_logo_dict[forbidden_logo] = site_id
+                    self.forbidden_logo_dict[fetch_object_key(forbidden_logo)] = site_id
+
+        except Exception as e:
+            print 'fail to read forbidden logo file. err: {0}'.format(e)
 
         return True
 
@@ -334,7 +365,9 @@ class LogoCheck(object):
                 continue
 
             ori_logo = ori_logo[0]
-            if ori_logo in self.default_logo_dict:
+            if ori_logo in self.forbidden_logo_dict:
+                continue
+            elif ori_logo in self.default_logo_dict:
                 default_logo_list.append((site_status, logo))
             else:
                 non_default_logo_list.append((site_status, logo))
