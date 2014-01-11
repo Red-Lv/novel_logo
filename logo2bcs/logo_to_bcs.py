@@ -5,7 +5,6 @@ __author__ = 'lvleibing01'
 
 import sys
 import time
-import pybcs
 import hashlib
 import MySQLdb
 import requests
@@ -15,44 +14,52 @@ import urllib
 import ConfigParser
 import subprocess
 
+from lib.bcs import *
+from lib.util import *
+
 
 class Logo2BCS(object):
 
     def __init__(self):
-
         pass
 
     def init(self, config_file):
 
         config = ConfigParser.ConfigParser()
         config.read(config_file)
-        
+
+        self.bcs = BCSExtended()
+        self.bcs.init(config)
+
         self.module_num = config.getint('logo2bcs', 'module_num')
         self.module_index = config.getint('logo2bcs', 'module_index')
         self.image_dir = config.get('logo2bcs', 'image_dir')
-        self.rid_file = config.get('logo2bcs', 'rid_file')
 
         self.rid_list = []
-        with open(self.rid_file) as fp:
-            for line in fp:
-
-                line = line.strip()
-                if not line:
-                    continue
-
-                rid = line
-                self.rid_list.append(rid)
+        rid_file = config.get('logo2bcs', 'rid_file')
+        self.set_rid_list(rid_file)
 
         self.timg_noexpired_key = config.get('timg', 'timg_noexpired_key')
 
-        self.bcs_host = config.get('bcs', 'host')
-        self.bcs_ak = config.get('bcs', 'ak')
-        self.bcs_sk = config.get('bcs', 'sk')
+        return True
 
-        self.bcs_bucket = config.get('bcs', 'bucket')
+    def set_rid_list(self, rid_file):
+        """
+        """
 
-        self.bcs = pybcs.BCS(self.bcs_host, self.bcs_ak, self.bcs_sk, pybcs.HttplibHTTPC)
-        self.bucket = self.bcs.bucket(self.bcs_bucket)
+        try:
+            with open(rid_file) as fp:
+                for line in fp:
+
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    rid = line
+                    self.rid_list.append(rid)
+
+        except Exception as e:
+            print 'fail to read rid file. err: {0}'.format(e)
 
         return True
 
@@ -196,20 +203,20 @@ class Logo2BCS(object):
                 continue
 
             ori_logo_dict[ori_logo] = 1
-            bcs_object_name = self.fetch_object_name(ori_logo)
+            bcs_object_key = fetch_object_key(ori_logo)
 
             try:
-                with open(self.image_dir + '/' + bcs_object_name, 'wb') as fp:
+                with open(self.image_dir + '/' + bcs_object_key, 'wb') as fp:
 
                     fp.write(r.content)
                     fp.close()
 
             except Exception as e:
-                print 'fail to open image file. err: {0}'.format(e)
+                print 'fail to write image file. err: {0}'.format(e)
                 continue
 
             print 'success in fetching ori logo. rid: {0}, book_name: {1}, ori_logo: {2}, bcs_object_name: {3}' \
-                  ''.format(rid, book_name, ori_logo, bcs_object_name)
+                  ''.format(rid, book_name, ori_logo, bcs_object_key)
 
         print 'stop fetching ori logo from the web'
 
@@ -268,9 +275,9 @@ class Logo2BCS(object):
                 continue
 
             ori_logo = ori_logo[0]
-            bcs_object_name = self.fetch_object_name(ori_logo)
+            bcs_object_key = fetch_object_key(ori_logo)
 
-            object = self.bucket.object('/' + bcs_object_name)
+            object = self.bucket.object('/' + bcs_object_key)
             ori_logo_substitution = object.get_url
             for retry_index in xrange(3):
                 try:
