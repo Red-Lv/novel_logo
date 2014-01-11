@@ -246,7 +246,7 @@ class LogoCheck(object):
             return False
 
         ori_logo = ori_logo[0]
-        if ori_logo in self.default_logo_dict:
+        if ori_logo in self.default_logo_dict or ori_logo in self.forbidden_logo_dict:
             return False
 
         return self.is_valid_logo(logo)
