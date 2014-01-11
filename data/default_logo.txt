@@ -103,6 +103,7 @@
 164	www.tadu.com	http://media.tadu.com/web_static/images/v1.5/categories/cover_250-200.jpg
 166	www.huanxia.com	http://pic.hxcdn.net/www/cover2.jpg
 167	www.yuanchuang.com	http://static.yuanchuang.com/images/nocover.jpg
+168	www.motie.com	http://img.motieimg.com/_assets/fish.gif?33
 169	www.qefeng.com	http://staic.qefeng.com:8080/cover/default.jpg
 171	siluke.com	http://www.siluke.com/modules/article/images/nocover.jpg
 172	quanben.com	http://www.quanben.com/modules/article/images/nocover.jpg
