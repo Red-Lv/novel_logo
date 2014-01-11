@@ -157,10 +157,10 @@ class LogoCheck(object):
 
             substitution_logo = self.fetch_substitution_logo(rid, book_name)
             if not substitution_logo:
-                substitution_logo = ''
+                if authority_logo[: len(self.bcs.bcs_host)] == self.bcs.bcs_host:
+                    continue
 
-            if authority_logo == substitution_logo:
-                continue
+                substitution_logo = ''
 
             #For debugging
             print 'rid: {0}, book_name: {1}, ori_logo: {2}, substitution_logo: {3}' \
