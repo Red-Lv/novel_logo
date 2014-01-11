@@ -261,7 +261,7 @@ class LogoCheck(object):
             print 'fail to connect to the db cluster. err: {0}'.format(e)
             return substitution_logo
 
-        table_id = self.get_novel_cluster_table_id(book_name.decode('GBK', 'ignore'))
+        table_id = get_novel_cluster_table_id(book_name.decode('GBK', 'ignore'))
 
         query_sql = 'SELECT site_id, dir_id, dir_url FROM novel_cluster_info%s WHERE cluster_id = %s' \
                     ''.format()
