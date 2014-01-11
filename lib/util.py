@@ -36,3 +36,8 @@ def fetch_object_key(url):
 
     return key
 
+if __name__ == '__main__':
+
+    url = 'http://image.cmfu.com/books/2750457/2750457.jpg'
+
+    print fetch_object_key(url)
