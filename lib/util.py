@@ -6,7 +6,7 @@ __author__ = 'lvleibing01'
 import hashlib
 
 
-def get_novel_cluster_table_id(self, book_name):
+def get_novel_cluster_table_id(book_name):
     """
     """
 
@@ -18,7 +18,7 @@ def get_novel_cluster_table_id(self, book_name):
     return table_id
 
 
-def fetch_object_key(self, url):
+def fetch_object_key(url):
     """
     """
 
