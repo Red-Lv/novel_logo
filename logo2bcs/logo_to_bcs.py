@@ -141,7 +141,7 @@ class Logo2BCS(object):
                 continue
 
             ori_logo = ori_logo[0]
-            if ori_logo[:23] == 'http://bj.bs.baidu.com/':
+            if ori_logo[:len(self.bcs.bcs_host)] == self.bcs.bcs_host:
                 continue
 
             authority_logo_list.append((rid, book_name, logo))
@@ -229,7 +229,7 @@ class Logo2BCS(object):
         #print 'python /home/work/tools/Baidu-BCS-SDK-Python-1.3.2/tools/bcsh.py upload -r {0} {1}'.format(self.image_dir, self.bcs_host + '/' + self.bcs_bucket)
         sub_process = subprocess.Popen('python /home/work/tools/Baidu-BCS-SDK-Python-1.3.2/tools/bcsh.py '
                                        'upload -r {0} {1}'
-                                       ''.format(self.image_dir, self.bcs_host + '/' + self.bcs_bucket + '/'),
+                                       ''.format(self.image_dir, self.bcs.bcs_host + '/' + self.bcs_bucket + '/'),
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         sub_process.wait()
 
@@ -277,7 +277,7 @@ class Logo2BCS(object):
             ori_logo = ori_logo[0]
             bcs_object_key = fetch_object_key(ori_logo)
 
-            object = self.bucket.object('/' + bcs_object_key)
+            object = self.bcs.bucket.object('/' + bcs_object_key)
             ori_logo_substitution = object.get_url
             for retry_index in xrange(3):
                 try:
